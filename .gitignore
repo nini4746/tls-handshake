@@ -12,3 +12,6 @@ tests/test_*
 *.der
 keylog*.txt
 cacert.pem
+
+# macOS debug bundles
+*.dSYM/
