@@ -7,6 +7,7 @@
 #include "reader.h"
 #include "record.h"
 #include "util.h"
+#include "verify.h"
 
 #include <sodium.h>
 #include <stdio.h>
@@ -140,11 +141,20 @@ static int verify_server_finished(tls_conn_t *c, const uint8_t *verify_data,
     return finished_verify(c->ks.server_hs_traffic, th, verify_data, vd_len);
 }
 
-/* Placeholder for certificate verification, wired in by plan 05. */
+/* Certificate verification gate (plan 05). Default is verify-active (SPEC N2);
+ * --insecure disables it but prints a warning and must never be the default. */
 static int verify_certificate_chain(tls_conn_t *c) {
-    (void)c;
-    warn("인증서 미검증 - plan 05 전까지 신뢰 불가 (certificate NOT verified)");
-    return 0;
+    if (c->insecure) {
+        warn("certificate verification DISABLED (--insecure) - server identity "
+             "NOT checked; do not trust this connection");
+        return 0;
+    }
+    if (!c->cafile) {
+        warn("no --cafile trust anchors given; cannot verify the certificate "
+             "chain");
+        return -1;
+    }
+    return verify_server_certificate(c);
 }
 
 static int expect_message(tls_conn_t *c, hs_buf_t *hb, uint8_t want,
