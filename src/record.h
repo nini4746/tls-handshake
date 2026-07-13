@@ -21,6 +21,7 @@
 typedef struct {
     uint8_t type;
     uint16_t version;   /* legacy_record_version */
+    uint8_t hdr[TLS_RECORD_HDR_LEN]; /* raw 5-byte header, as received (AEAD AAD) */
     uint8_t *body;      /* malloc'd fragment; caller frees */
     size_t len;
 } record_t;

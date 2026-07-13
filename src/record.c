@@ -26,6 +26,7 @@ int record_read(int fd, record_t *out) {
     uint16_t len;
     if (record_parse_header(hdr, &out->type, &out->version, &len) != 0)
         return -1;
+    memcpy(out->hdr, hdr, TLS_RECORD_HDR_LEN);
 
     uint8_t *body = NULL;
     if (len > 0) {

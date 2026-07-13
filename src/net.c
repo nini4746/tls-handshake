@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 
 int net_connect(const char *host, const char *port) {
     struct addrinfo hints, *res = NULL, *rp;
@@ -65,6 +66,13 @@ int write_full(int fd, const uint8_t *buf, size_t n) {
         sent += (size_t)w;
     }
     return 0;
+}
+
+void net_set_recv_timeout(int fd, int seconds) {
+    struct timeval tv;
+    tv.tv_sec = seconds;
+    tv.tv_usec = 0;
+    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof tv);
 }
 
 void net_close(int fd) {

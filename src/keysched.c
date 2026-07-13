@@ -1,6 +1,7 @@
 #include "keysched.h"
 #include "int.h"
 
+#include <sodium.h>
 #include <string.h>
 
 void ks_derive_handshake(key_schedule_t *ks, const uint8_t ecdhe[32],
@@ -60,4 +61,15 @@ void ks_nonce(const uint8_t iv[AEAD_IV_LEN], uint64_t seq,
     /* XOR the 64-bit sequence number into the trailing 8 bytes (big-endian). */
     for (int i = 0; i < 8; i++)
         nonce[AEAD_IV_LEN - 1 - i] ^= (uint8_t)(seq >> (8 * i));
+}
+
+int finished_verify(const uint8_t secret[HASH_LEN],
+                    const uint8_t transcript_hash[HASH_LEN],
+                    const uint8_t *verify_data, size_t vd_len) {
+    uint8_t fk[HASH_LEN], expect[HASH_LEN];
+    ks_finished_key(secret, fk);
+    hmac_sha256(expect, fk, HASH_LEN, transcript_hash, HASH_LEN);
+    if (vd_len != HASH_LEN)
+        return -1;
+    return sodium_memcmp(expect, verify_data, HASH_LEN) == 0 ? 0 : -1;
 }

@@ -45,4 +45,11 @@ void ks_finished_key(const uint8_t secret[HASH_LEN], uint8_t out[HASH_LEN]);
 void ks_nonce(const uint8_t iv[AEAD_IV_LEN], uint64_t seq,
               uint8_t nonce[AEAD_IV_LEN]);
 
+/* Verify a Finished message (RFC 8446 4.4.4):
+ * expected = HMAC(HKDF-Expand-Label(secret,"finished","",HashLen), transcript_hash).
+ * Returns 0 if verify_data matches expected (constant-time), -1 otherwise. */
+int finished_verify(const uint8_t secret[HASH_LEN],
+                    const uint8_t transcript_hash[HASH_LEN],
+                    const uint8_t *verify_data, size_t vd_len);
+
 #endif /* TLS_KEYSCHED_H */

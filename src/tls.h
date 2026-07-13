@@ -7,6 +7,8 @@
 
 #include "buf.h"
 #include "handshake_buf.h"
+#include "keysched.h"
+#include "aead.h"
 
 /* Negotiated fixed parameters (single supported combination). */
 #define TLS13_VERSION 0x0304
@@ -46,6 +48,28 @@ typedef struct {
     /* Running transcript: every handshake message (with its 4-byte header, no
      * record header) in order. Plan 03 hashes prefixes of this. */
     buf_t transcript;
+
+    /* Derived secrets and per-direction record protection contexts. */
+    key_schedule_t ks;
+    aead_ctx_t rd_hs, wr_hs;   /* handshake traffic (server read / client write) */
+    aead_ctx_t rd_app, wr_app; /* application traffic */
+
+    /* Certificate / CertificateVerify material captured for plan 05. */
+    buf_t cert_msg;       /* Certificate handshake body (after 4-byte header) */
+    buf_t cert_verify;    /* CertificateVerify handshake body */
+    uint8_t th_cert[HASH_LEN]; /* Transcript-Hash(ClientHello..Certificate) */
+    int have_th_cert;
+
+    /* Reassembly buffer for handshake messages arriving after the handshake
+     * completes (e.g. NewSessionTicket over application records). */
+    hs_buf_t app_hsbuf;
+
+    int handshake_done;
+    int dump_certs;       /* write server DER certs to cert_N.der for debugging */
+
+    const char *cafile;   /* trust anchor bundle (plan 05); NULL = not set */
+    int insecure;         /* skip cert verification (plan 05); default off */
+    const char *keylog;   /* SSLKEYLOGFILE path (plan 06); NULL = disabled */
 } tls_conn_t;
 
 void tls_conn_init(tls_conn_t *c, int fd, const char *host);

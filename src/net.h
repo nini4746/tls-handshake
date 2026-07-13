@@ -16,6 +16,10 @@ int read_full(int fd, uint8_t *buf, size_t n);
 /* Write exactly n bytes from buf. Returns 0 on success, -1 on error. */
 int write_full(int fd, const uint8_t *buf, size_t n);
 
+/* Set a receive timeout in seconds (0 clears it). Used to bound the
+ * post-handshake NewSessionTicket drain so reads don't block forever. */
+void net_set_recv_timeout(int fd, int seconds);
+
 void net_close(int fd);
 
 #endif /* TLS_NET_H */
