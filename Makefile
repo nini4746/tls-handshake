@@ -8,7 +8,10 @@ OPENSSL := $(shell brew --prefix openssl@3)
 
 CC      := cc
 CFLAGS  := -std=c11 -Wall -Wextra -Wpedantic -g \
+           -Wno-unknown-attributes \
            -I src -I$(SODIUM)/include -I$(OPENSSL)/include
+# -Wno-unknown-attributes: libsodium's headers use a _Noreturn attribute this
+# clang flags under -Wpedantic; it is not our code. All src/ code is warning-free.
 LDFLAGS := -L$(SODIUM)/lib -L$(OPENSSL)/lib
 LDLIBS  := -lsodium -lcrypto
 

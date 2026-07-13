@@ -1,13 +1,11 @@
 # build artifacts
 *.o
 tls-client
-tests/test_record
-tests/test_hkdf
-tests/test_keysched
-tests/test_aead
-tests/test_handshake
-tests/test_x509
-tests/test_verify
+
+# compiled test binaries (sources are kept)
+tests/test_*
+!tests/test_*.c
+!tests/test_*.h
 
 # runtime / debug output
 *.pcap
