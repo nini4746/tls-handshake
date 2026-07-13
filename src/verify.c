@@ -451,8 +451,9 @@ int verify_server_certificate(tls_conn_t *c) {
         return -1;
     }
 
-    printf("certificate verified: chain to trust anchor OK, hostname '%s' "
-           "matched, CertificateVerify OK\n",
-           c->host);
+    fprintf(stderr,
+            "certificate verified: chain to trust anchor OK, hostname '%s' "
+            "matched, CertificateVerify OK\n",
+            c->host);
     return 0;
 }

@@ -3,12 +3,14 @@
  * handshake key derivation, the encrypted server flight, server/client
  * Finished, application key derivation - then drain NewSessionTickets.
  * (Plan 05 adds certificate verification; plan 06 adds application data.) */
+#include "appdata.h"
 #include "handshake.h"
 #include "net.h"
 #include "tls.h"
 #include "util.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static void usage(const char *prog) {
@@ -53,7 +55,7 @@ int main(int argc, char **argv) {
     int fd = net_connect(host, port);
     if (fd < 0)
         die("TCP connect to %s:%s failed", host, port);
-    printf("TCP connected to %s:%s\n", host, port);
+    fprintf(stderr, "TCP connected to %s:%s\n", host, port);
 
     tls_conn_t c;
     tls_conn_init(&c, fd, host);
@@ -64,13 +66,25 @@ int main(int argc, char **argv) {
 
     if (handshake_do_hello(&c) != 0)
         die("ClientHello/ServerHello exchange failed");
-    printf("ServerHello OK: cipher suite 0x%04x\n", c.cipher_suite);
+    fprintf(stderr, "ServerHello OK: cipher suite 0x%04x\n", c.cipher_suite);
 
     if (handshake_run(&c) != 0)
         die("handshake failed");
-    printf("handshake complete - server and client Finished verified\n");
+    fprintf(stderr, "handshake complete - server and client Finished verified\n");
 
-    handshake_drain_tickets(&c);
+    /* Optional key log for Wireshark decryption (SPEC N5: only if requested). */
+    keylog_write(&c);
+
+    /* Send a minimal GET and stream the response to stdout (no HTTP parsing). */
+    char req[512];
+    int rn = snprintf(req, sizeof req,
+                      "GET / HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n",
+                      host);
+    if (tls_send_app(&c, (const uint8_t *)req, (size_t)rn) != 0)
+        die("failed to send request");
+
+    tls_recv_loop(&c);
+    tls_close_notify(&c);
 
     tls_conn_free(&c);
     net_close(fd);
