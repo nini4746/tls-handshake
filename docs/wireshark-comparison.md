@@ -23,10 +23,37 @@ python3 capture.py mine_ch.bin &   ; ./tls-client 127.0.0.1 9443
 - curl 캡처: 301바이트
 - curl 백엔드: `curl 8.7.1 ... (SecureTransport) LibreSSL/3.3.6` (macOS 기본)
 
-GUI Wireshark에서 같은 화면을 보려면: 아래 "키 로그로 복호화" 절차대로 `--keylog`로 캡처를
-복호화하면 ClientHello뿐 아니라 암호화된 EncryptedExtensions/Certificate/응답까지 디코딩된다.
-스크린샷은 사용자의 GUI 환경에서 `mine.pcap` / `curl.pcap`을 열어 캡처해 이 폴더에
-`mine.png` / `curl.png`로 추가하면 된다 (헤드리스 CI에서는 생성 불가).
+## Wireshark 스크린샷 (실캡처, 2026-07-14)
+
+위 로컬 리스너 방식과 별개로, Ubuntu 24.04 컨테이너(aarch64)에서 root `tcpdump`로
+google.com:443 대상 **전체 세션**을 캡처하고 Xvfb 가상 디스플레이 위에 GUI Wireshark
+4.2.2를 띄워 스크린샷을 떴다. 파일은 `captures/`에 있다:
+
+- `captures/mine.png` - `mine.pcap`(내 클라이언트, `./tls-client google.com 443
+  --cafile cacert.pem --keylog ...`)의 패킷 리스트. Client Hello(SNI=google.com,
+  레코드 241B) → Server Hello/CCS → Application Data 흐름과 1-RTT 완료가 보인다.
+- `captures/curl.png` - `curl.pcap`(컨테이너 curl 8.5.0, OpenSSL 3.0.13 백엔드)의
+  패킷 리스트. Client Hello가 589B 프레임으로 훨씬 크다.
+- `captures/decrypted.png` - `mine.pcap`을 `tls.keylog_file`에 키 로그를 지정해 연
+  화면. 필터 `http || tls.handshake` 아래 **`GET / HTTP/1.1`과
+  `HTTP/1.1 301 Moved Permanently`가 HTTP 평문 행으로 디코딩**되고, Encrypted
+  Extensions / Certificate / Finished도 풀려 있다 = 복호화 성공 증거.
+- 원본 pcap 2개도 `captures/`에 포함 (키 로그 파일은 저장소에 넣지 않는다 - pcap과
+  키 로그가 함께 있으면 세션이 통째로 복호화되므로).
+
+tshark 교차 확인: `tshark -r mine.pcap -o tls.keylog_file:... `에서
+`Encrypted Extensions, Certificate, Certificate Verify, Finished`(#10),
+`GET / HTTP/1.1`(#14), `301 Moved Permanently (text/html)`(#16), Close Notify(#18).
+
+### 컨테이너 curl(OpenSSL)과 위 표(macOS SecureTransport)의 차이
+
+위 비교표는 macOS `curl`(SecureTransport/LibreSSL 백엔드) 실측이다. 스크린샷의
+컨테이너 curl은 OpenSSL 3.0.13 백엔드라 ClientHello가 또 다르다 (curl.pcap의
+tshark 실측): 암호군 31개(TLS 1.3 3종 + ECDHE/DHE/RSA CBC·GCM 레거시 + SCSV),
+확장 12개, **ALPN `h2, http/1.1` 포함 → 서버와 HTTP/2 협상** (decrypted 확인 시
+HTTP2 SETTINGS/HEADERS 프레임), ec_point_formats 있음, GREASE 없음, 레코드 버전
+0x0301. 클라이언트 구현마다 지문이 다르다는 점 자체가 이 문서의 비교 포인트다 -
+내 클라이언트(1 암호군/5 확장/ALPN 없음)는 그중 최소 지문이다.
 
 ## ClientHello 필드 비교표
 
@@ -111,4 +138,4 @@ GUI Wireshark에서 복호화하는 절차:
 4. curl 비교분은 `SSLKEYLOGFILE=keylog_curl.txt curl ...`로 같은 절차를 반복.
 
 > 이 저장소의 키 로그 4줄은 Wireshark의 TLS 1.3 복호화에 필요한 그대로의 라벨/형식이다.
-> 스크린샷(`mine.png`, `curl.png`, `decrypted.png`)은 GUI 환경에서 위 절차로 캡처해 추가한다.
+> 위 절차를 실제 수행한 결과가 `captures/decrypted.png`다 (2026-07-14, Wireshark 4.2.2 + Xvfb).

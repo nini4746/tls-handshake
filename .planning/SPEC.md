@@ -32,7 +32,7 @@ https가 바이트 단위로 무엇을 하는지 이해한다. 암호 프리미�
    - [ ] ServerHello에서 supported_versions가 0x0304(TLS 1.3)임을 확인하고, 아니면 에러로 종료한다
    - [ ] 서버가 클라이언트가 제시하지 않은 암호군을 선택하면 에러로 종료한다
    - [ ] HelloRetryRequest(고정 random 값으로 식별)를 받으면 "HRR 미지원" 명시 에러로 종료한다
-   - [ ] ClientHello 바이트가 Wireshark에서 오류 없이 디코딩된다
+   - [x] ClientHello 바이트가 Wireshark에서 오류 없이 디코딩된다 - 2026-07-14 GUI Wireshark 4.2.2에서 `Client Hello (SNI=google.com)` 정상 디코딩 (`docs/captures/mine.png`), tshark -V로 필드 단위 확인
 
 ### R3. 키 스케줄
 
@@ -84,13 +84,13 @@ https가 바이트 단위로 무엇을 하는지 이해한다. 암호 프리미�
 ### R7. 검증 문서 (Wireshark 비교)
 
 1. **검증 문장**: 내 클라이언트와 curl의 핸드셰이크를 Wireshark로 나란히 캡처해 비교한 문서가 저장소에 존재한다.
-2. **현재 상태**: 문서 없음.
+2. **현재 상태**: **완료 (2026-07-14).** Ubuntu 24.04 컨테이너에서 tcpdump 실캡처 + Xvfb 위 GUI Wireshark 4.2.2 스크린샷으로 마감.
 3. **목표 상태**: `docs/wireshark-comparison.md`에 캡처 스크린샷과 필드 비교표, 차이점 분석이 담겨 있고, SSLKEYLOGFILE 형식 키 로그 출력 옵션으로 캡처를 복호화해 확인했다.
 4. **수용 기준**:
-   - [ ] 내 클라이언트 캡처와 curl 캡처 스크린샷이 각 1장 이상 포함된다
-   - [ ] ClientHello 필드(버전, 암호군 목록, 확장 목록) 비교표가 있다
-   - [ ] 차이점과 그 이유가 최소 3가지 서술된다
-   - [ ] `--keylog <file>` 옵션(기본 꺼짐)으로 SSLKEYLOGFILE 형식 키 로그를 출력하고, Wireshark에서 애플리케이션 데이터 복호화에 성공한 화면이 포함된다
+   - [x] 내 클라이언트 캡처와 curl 캡처 스크린샷이 각 1장 이상 포함된다 - `docs/captures/mine.png`, `docs/captures/curl.png` (원본 pcap 동봉). curl은 macOS SecureTransport 대신 컨테이너 curl 8.5.0(OpenSSL 3.0.13) - 백엔드 차이는 문서에 명시
+   - [x] ClientHello 필드(버전, 암호군 목록, 확장 목록) 비교표가 있다 - macOS curl 실측 표 + 컨테이너 OpenSSL curl 차이 절
+   - [x] 차이점과 그 이유가 최소 3가지 서술된다 - 5가지 (암호군 수, supported_versions, ALPN, groups/ec_point_formats, 레코드 버전)
+   - [x] `--keylog <file>` 옵션(기본 꺼짐)으로 SSLKEYLOGFILE 형식 키 로그를 출력하고, Wireshark에서 애플리케이션 데이터 복호화에 성공한 화면이 포함된다 - `docs/captures/decrypted.png`: keylog 적용 후 `GET / HTTP/1.1` / `301 Moved Permanently` HTTP 평문 행 표시, tshark 교차 확인
 
 ## must-NOT (부정 수용 기준)
 
