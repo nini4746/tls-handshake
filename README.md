@@ -164,6 +164,8 @@ docs/
 
 - [docs/SRS.md](docs/SRS.md) - 요구사항 명세
 - [docs/SDS.md](docs/SDS.md) - 설계 명세: 구성도, 시퀀스, 자료구조와 바이트 형식, 키 스케줄, 모듈
+- [docs/adr/](docs/adr/README.md) - 설계 결정 기록
+- [CHANGELOG.md](CHANGELOG.md) - 변경 이력
 - [docs/wireshark-comparison.md](docs/wireshark-comparison.md) - curl과의 ClientHello 비교, 키 로그 복호화
 - [.planning/SPEC.md](.planning/SPEC.md) - 요구사항, must-NOT 규칙, 범위 경계
 - [.planning/plans/](.planning/plans/) - 구현 단계별 학습 가이드 (레코드 층 ~ 애플리케이션 데이터)
