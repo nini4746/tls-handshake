@@ -342,6 +342,10 @@ int verify_server_certificate(tls_conn_t *c) {
         warn("verify: Certificate message has no certificates");
         return -1;
     }
+    if (n > MAX_CHAIN) {
+        warn("verify: certificate chain too long (%d > %d)", n, MAX_CHAIN);
+        return -1;
+    }
 
     x509_cert_t chain[MAX_CHAIN];
     for (int i = 0; i < n; i++) {

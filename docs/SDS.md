@@ -593,7 +593,7 @@ flowchart TB
 | 지원하지 않는 서명 알고리즘 OID / CV scheme | 실패 |
 | 인증서의 RSASSA-PSS OID | 파라미터를 읽지 않고 SHA-256으로 가정 |
 | CertificateVerify 형식 오류, 서명 불일치 | 실패 |
-| 서버가 인증서 11개 이상 전송 | 알려진 결함: `MAX_CHAIN`(10) 초과를 거부하지 않아 스택 배열 범위 밖을 읽는다 (ASan으로 재현) |
+| 서버가 인증서 11개 이상 전송 | `certificate chain too long (N > 10)` 경고, 실패. `MAX_CHAIN`(10) 초과 체인은 파싱 전에 거부한다 (#1) |
 | 서버 Finished verify_data 불일치 | `server Finished verify_data mismatch`, 실패 |
 | 검증 실패 일반 | 클라이언트 Finished, GET, alert를 보내지 않고 종료 코드 1 |
 | 핸드셰이크 후 NewSessionTicket | 재조립 후 크기만 stderr에 출력하고 무시 |
